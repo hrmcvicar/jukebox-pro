@@ -1,49 +1,43 @@
 import db from "#db/client";
 
-export async function createTrack(name, durationMs) {
-  const sql = `
-  INSERT INTO tracks
-    (name, duration_ms)
-  VALUES
-    ($1, $2)
-  RETURNING *
-  `;
-  const {
-    rows: [track],
-  } = await db.query(sql, [name, durationMs]);
-  return track;
-}
-
+// get all tracks
 export async function getTracks() {
-  const sql = `
-  SELECT *
-  FROM tracks
-  `;
-  const { rows: tracks } = await db.query(sql);
-  return tracks;
+  const result = await db.query(`
+    SELECT *
+    FROM tracks
+    ORDER BY id;
+  `);
+
+  return result.rows;
 }
 
-export async function getTracksByPlaylistId(id) {
-  const sql = `
-  SELECT tracks.*
-  FROM
-    tracks
-    JOIN playlists_tracks ON playlists_tracks.track_id = tracks.id
-    JOIN playlists ON playlists.id = playlists_tracks.playlist_id
-  WHERE playlists.id = $1
-  `;
-  const { rows: tracks } = await db.query(sql, [id]);
-  return tracks;
-}
-
+// get one track by id
 export async function getTrackById(id) {
-  const sql = `
-  SELECT *
-  FROM tracks
-  WHERE id = $1
-  `;
-  const {
-    rows: [track],
-  } = await db.query(sql, [id]);
-  return track;
+  const result = await db.query(
+    `
+    SELECT *
+    FROM tracks
+    WHERE id = $1;
+  `,
+    [id]
+  );
+
+  return result.rows[0];
+}
+
+// get tracks in a playlist
+export async function getTracksByPlaylistId(playlistId) {
+  const result = await db.query(
+    `
+    SELECT t.*
+    FROM tracks t
+    JOIN playlists_tracks pt
+      ON pt.track_id = t.id
+    WHERE pt.playlist_id = $1
+    ORDER BY t.id;
+  `,
+    [playlistId]
+  );
+
+  return result.rows;
 }
